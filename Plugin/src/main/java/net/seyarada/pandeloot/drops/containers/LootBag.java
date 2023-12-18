@@ -65,7 +65,7 @@ public final class LootBag extends LootTable {
     }
 
     public static void openGroundLootBag(PlayerInteractEvent e){
-        if (e.getHand() != EquipmentSlot.OFF_HAND) return;
+        if (e.getHand() != EquipmentSlot.HAND) return;
         ItemStack iS;
         PersistentDataContainer data;
         // Lootbag on ground
