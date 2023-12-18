@@ -15,7 +15,9 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
+import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
@@ -31,30 +33,41 @@ public final class LootBag extends LootTable {
         PersistentDataContainer data;
 
         // Lootbag on player
-        iS = e.getPlayer().getEquipment().getItemInMainHand();
-        if(iS.getType()==Material.AIR) iS = e.getPlayer().getEquipment().getItemInOffHand();
-        if(iS.hasItemMeta()) {
+        iS = e.getItem();
+        // If there's no item to check check on the ground.
+        // Using OFF_HAND
+        if (iS == null) {
+            openGroundLootBag(e);
+            return;
+        }
+        if (iS.hasItemMeta()) {
             data = iS.getItemMeta().getPersistentDataContainer();
 
-            if(data.has(Constants.LOOTBAG_KEY, PersistentDataType.STRING)) {
+            if (data.has(Constants.LOOTBAG_KEY, PersistentDataType.STRING)) {
                 String id = data.get(Constants.LOOTBAG_KEY, PersistentDataType.STRING);
-
-                if(data.has(Constants.KEY, PersistentDataType.STRING)) {
+                e.setCancelled(true);
+                if (data.has(Constants.KEY, PersistentDataType.STRING)) {
                     FlagPack flagPack = FlagPack.fromCompact(data.get(Constants.KEY, PersistentDataType.STRING));
-                    if(flagPack.passesConditions(FlagTrigger.onopen, null, e.getPlayer()))
+                    if (flagPack.passesConditions(FlagTrigger.onopen, null, e.getPlayer()))
                         flagPack.trigger(FlagTrigger.onopen, null, e.getPlayer());
                     else return;
                 }
 
-                iS.setAmount(iS.getAmount()-1);
+                iS.setAmount(iS.getAmount() - 1);
                 new LootDrop(ContainerManager.get(id), e.getPlayer(), e.getPlayer().getLocation())
                         .build()
                         .drop();
                 return;
             }
         }
+        // Only check ground items from offhand to avoid double checks.
+        openGroundLootBag(e);
+    }
 
-
+    public static void openGroundLootBag(PlayerInteractEvent e){
+        if (e.getHand() != EquipmentSlot.OFF_HAND) return;
+        ItemStack iS;
+        PersistentDataContainer data;
         // Lootbag on ground
         if(e.getClickedBlock()==null) return;
         Location loc = e.getClickedBlock().getLocation();
@@ -82,7 +95,7 @@ public final class LootBag extends LootTable {
             }
 
             if(aDrop.amountOpened>=iS.getAmount()) return;
-
+            e.setCancelled(true);
             if(data.has(Constants.KEY, PersistentDataType.STRING)) {
                 FlagPack flagPack = FlagPack.fromCompact(data.get(Constants.KEY, PersistentDataType.STRING));
                 if(flagPack.passesConditions(FlagTrigger.onopen, item, e.getPlayer()))

@@ -19,7 +19,6 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.entity.ItemMergeEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 
@@ -50,12 +49,15 @@ public class ActiveDropListener implements Listener {
 
     @EventHandler
     public void onPickup(EntityPickupItemEvent e) {
-        if( !(e.getEntity() instanceof Player player) ) return;
+        Player player = e.getEntity() instanceof Player ? (Player) e.getEntity() : null;
 
         Item i = e.getItem();
         ActiveDrop activeDrop = ActiveDrop.get(i);
         if(activeDrop==null) return;
-
+        if (player == null){
+            e.setCancelled(true);
+            return;
+        }
         if(!activeDrop.canBePickedUp) {
             e.setCancelled(true);
             return;
@@ -93,11 +95,11 @@ public class ActiveDropListener implements Listener {
 
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent e) {
-        if (e.getAction() == Action.PHYSICAL) return;
+        if (e.getAction() == Action.PHYSICAL ||
+                e.getAction() == Action.LEFT_CLICK_AIR ||
+                e.getAction() == Action.LEFT_CLICK_BLOCK) return;
 
-        if (e.getHand() == EquipmentSlot.HAND) {
-            LootBag.openDroppedLootBag(e);
-        }
+        LootBag.openDroppedLootBag(e);
     }
 
     @EventHandler
