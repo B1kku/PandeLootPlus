@@ -16,7 +16,7 @@ public class MythicSkillFlag implements IGeneralEvent {
 	public void onCallGeneral(ItemDropMeta meta) {
 		if(meta.lootDrop()==null) return;
 
-		Location origin = meta.lootDrop().dropEntity.getLocation();
+		Location origin = meta.lootDrop().dropEntity != null ? meta.lootDrop().dropEntity.getLocation() : meta.lootDrop().getLocation();
 		String skill = meta.getString();
 		Entity caster = (meta.lootDrop().p!=null) ? meta.lootDrop().p : meta.lootDrop().sourceEntity;
 		ArrayList<Entity> targets = new ArrayList<>();
